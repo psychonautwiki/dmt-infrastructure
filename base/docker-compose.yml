@@ -1,0 +1,93 @@
+version: '2'
+
+services:
+  h2o:
+    build: ./h2o
+    container_name: h2o
+    networks:
+      - void
+    links:
+      - varnish
+    volumes:
+      - ./h2o:/h2o:ro
+      - ../secrets/tls:/tls:ro
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+
+  varnish:
+    build: ./varnish
+    container_name: varnish
+    networks:
+      - void
+    links:
+      - ruleproxy
+    volumes:
+      - ./varnish:/etc/varnish
+    expose:
+      - 80
+
+  mysql:
+    image: mysql:5.7.15
+    container_name: mysql
+    networks:
+      - void
+    volumes:
+      - ../db/mysql:/var/lib/mysql
+    expose:
+      - 3306
+
+  redis:
+    image: redis:3.2.3-alpine
+    networks:
+      - void
+    volumes:
+      - ../db/redis:/data
+
+  mediawiki-hhvm:
+    build: ./hhvm-base
+    container_name: hhvm-base
+    networks:
+      - void
+    links:
+      - mysql
+      - redis
+    volumes:
+      - ../mediawiki-data:/var/www/public
+      - /mnt/ramdisk:/var/tmp
+    expose:
+      - 80
+    ports:
+      - "0.0.0.0:7000:80"
+
+  ruleproxy:
+    image: nginx:1.11.4-alpine
+    container_name: ruleproxy
+    networks:
+      - void
+    links:
+      - mediawiki-hhvm
+    volumes:
+      - ./nginx:/etc/nginx:ro
+    expose:
+      - 80
+
+  parsoid:
+    build: ./parsoid
+    container_name: parsoid
+    environment:
+      - MW_URL="https://psychonautwiki.org"
+    networks:
+      - void
+    expose:
+      - 8000
+
+networks:
+  void:
+    ipam:
+      driver: default
+      config:
+        - subnet: 2.2.0.0/16
+          ip_range: 2.2.5.0/24
+          gateway: 2.2.5.254
+

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+varnishd -a :80 \
+         -f /etc/varnish/default.vcl \
+         -S /etc/varnish/secret \
+         -s malloc,1G
+
+varnishlog 2>&1 > /dev/null
