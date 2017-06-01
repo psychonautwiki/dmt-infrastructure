@@ -3,50 +3,204 @@ version: '2'
 services:
   h2o:
     build: ./h2o
-    container_name: h2o
     networks:
       - void
     links:
       - varnish
+      - countly
+      - heimdal
+      - api
     volumes:
       - ./h2o:/h2o:ro
       - ../secrets/tls:/tls:ro
+      - /etc/letsencrypt/:/letsencrypt/:ro
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
 
   varnish:
     build: ./varnish
-    container_name: varnish
     networks:
       - void
     links:
       - ruleproxy
     volumes:
       - ./varnish:/etc/varnish
+      - /etc/localtime:/etc/localtime:ro
     expose:
       - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  heimdal:
+    build: ./heimdal
+    networks:
+      - void
+    volumes:
+      - ../db/heimdal:/tmp/data/
+    expose:
+      - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
 
   mysql:
-    image: mysql:5.7.15
-    container_name: mysql
+    image: mysql:8.0.0
     networks:
       - void
     volumes:
       - ../db/mysql:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - ../backup/mysql:/backup
     expose:
       - 3306
+    ports:
+      - "127.0.0.1:3306:3306"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  mongo-dmt:
+    image: mongo:3.4.2
+    networks:
+      - void
+    volumes:
+      - ../db/mongo-dmt:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 27017
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  mongo:
+    image: mongo:3.4.2
+    networks:
+      - void
+    volumes:
+      - ../db/mongo:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 27017
+    ports:
+      - "127.0.0.1:27017:27017"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  es:
+    image: elasticsearch:2.4.4-alpine
+    networks:
+      - void
+    volumes:
+      - ../db/esdata:/usr/share/elasticsearch/data
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 9200
+      - 9300
+    ports:
+      - "127.0.0.1:9200:9200"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
 
   redis:
-    image: redis:3.2.3-alpine
+    image: redis:3.2.8-alpine
     networks:
       - void
     volumes:
       - ../db/redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  countly:
+    image: countly/countly-server
+    networks:
+      - void
+    links:
+      - mongo
+    volumes:
+      - ./countly/config/frontend.js:/opt/countly/frontend/express/config.js
+      - ./countly/config/api.js:/opt/countly/api/config.js
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
+
+  changebot:
+    build: ./changebot
+    networks:
+      - void
+    expose:
+      - 3000
+    environment:
+      - TELEGRAM_TOKEN=REMOVED
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
+
+  katharsis:
+    build: ./katharsis
+    networks:
+      - void
+    expose:
+      - 80
+    environment:
+      - API_TOKEN=REMOVED
+      - APP_ID=REMOVED
+      - ROCKET_ENV=prod
+      - ROCKET_PORT=80
+      - ROCKET_ADDRESS=0.0.0.0
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
 
   mediawiki-hhvm:
     build: ./hhvm-base
-    container_name: hhvm-base
     networks:
       - void
     links:
@@ -55,32 +209,84 @@ services:
     volumes:
       - ../mediawiki-data:/var/www/public
       - /mnt/ramdisk:/var/tmp
+      - /etc/localtime:/etc/localtime:ro
     expose:
       - 80
-    ports:
-      - "0.0.0.0:7000:80"
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
 
   ruleproxy:
-    image: nginx:1.11.4-alpine
-    container_name: ruleproxy
+    image: nginx:1.13.0-alpine
     networks:
       - void
     links:
       - mediawiki-hhvm
     volumes:
+      - ../mediawiki-data:/var/www/public
       - ./nginx:/etc/nginx:ro
+      - /etc/localtime:/etc/localtime:ro
     expose:
       - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 900000
 
-  parsoid:
-    build: ./parsoid
-    container_name: parsoid
+  api:
+    build: ./bifrost
     environment:
-      - MW_URL="https://psychonautwiki.org"
+      - PORT=80
+#      - PLEBISCITE=1
+      - MONGO_URL=mongodb://mongo-dmt:27017/plebiscite
+      - MONGO_COLLECTION=reports
     networks:
       - void
     expose:
-      - 8000
+      - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+#  tor-hidden-service:
+#    build: ./tor-hidden-service
+#    networks:
+#      - void
+#    links:
+#      - h2o
+#    volumes:
+#      - ../secrets/tor/:/usr/local/etc/tor/
+#      - /etc/localtime:/etc/localtime:ro
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+
+#  parsoid:
+#    build: ./parsoid
+#    environment:
+#      - MW_URL="https://psychonautwiki.org"
+#      - /etc/localtime:/etc/localtime:ro
+#    networks:
+#      - void
+#    expose:
+#      - 8000
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
 
 networks:
   void:
@@ -90,4 +296,3 @@ networks:
         - subnet: 2.2.0.0/16
           ip_range: 2.2.5.0/24
           gateway: 2.2.5.254
-

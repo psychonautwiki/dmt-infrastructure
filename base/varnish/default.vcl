@@ -10,6 +10,10 @@ vcl 4.0;
 backend default {
     .host = "ruleproxy";
     .port = "80";
+
+    .connect_timeout = 10s;
+    .first_byte_timeout = 60s;
+    .between_bytes_timeout = 60s;
 }
 
 # access control list for "purge": open to only localhost and other local nodes
@@ -22,7 +26,7 @@ acl purge {
 sub vcl_recv {
     # Serve objects up to 2 minutes past their expiry if the backend
     # is slow to respond.
-    # set req.grace = 120s;
+    #set req.grace = 120s;
 
     if (req.restarts == 0) {
         if (req.http.X-Forwarded-For) {

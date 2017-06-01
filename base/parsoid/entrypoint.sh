@@ -10,6 +10,8 @@ if [ ! -h settings.js ]; then
 		mv settings.js /data/settings.js
 	fi
 
+	rm settings.js
+
 	ln -s "/data/settings.js" settings.js
 fi
 
@@ -19,6 +21,8 @@ if [ ! -h "$LOCALSETTINGS_FILE" ]; then
 	if [ ! -e "/data/localsettings.js" ]; then
 		mv "$LOCALSETTINGS_FILE" /data/localsettings.js
 	fi
+
+	rm "$LOCALSETTINGS_FILE"
 
 	ln -s "/data/localsettings.js" "$LOCALSETTINGS_FILE"
 fi
