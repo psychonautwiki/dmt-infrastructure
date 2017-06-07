@@ -68,8 +68,8 @@ services:
       - ../backup/mysql:/backup
     expose:
       - 3306
-    ports:
-      - "127.0.0.1:3306:3306"
+#    ports:
+#      - "127.0.0.1:3306:3306"
     restart: always
     ulimits:
       nproc: 65535
@@ -102,8 +102,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     expose:
       - 27017
-    ports:
-      - "127.0.0.1:27017:27017"
+ #   ports:
+ #     - "127.0.0.1:27017:27017"
     restart: always
     ulimits:
       nproc: 65535
@@ -121,8 +121,8 @@ services:
     expose:
       - 9200
       - 9300
-    ports:
-      - "127.0.0.1:9200:9200"
+#    ports:
+#      - "127.0.0.1:9200:9200"
     restart: always
     ulimits:
       nproc: 65535
@@ -137,8 +137,8 @@ services:
     volumes:
       - ../db/redis:/data
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "127.0.0.1:6379:6379"
+#    ports:
+#      - "127.0.0.1:6379:6379"
     restart: always
     ulimits:
       nproc: 65535
