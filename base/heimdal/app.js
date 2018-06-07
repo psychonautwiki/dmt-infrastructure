@@ -21,10 +21,11 @@ app.post('/ingress', (req, res) => {
     res.end();
 });
 
-app.get('REMOVED', (req, res) =>
-	db.createValueStream()
-          .on('data', line => res.write(`${line}\n`))
-          .on('end', () => res.end())
+app.get('/egress/dump/REMOVED', (req, res) =>
+//	db.createValueStream()
+//          .on('data', line => res.write(`${line}\n`))
+//          .on('end', () => res.end())
+res.end("If you read this, contact me at kenan@sly.mn")
 );
 
 app.listen(80);

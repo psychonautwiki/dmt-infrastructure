@@ -5,19 +5,16 @@ services:
     build: ./h2o
     networks:
       - void
-    links:
-      - varnish
-      - countly
-      - heimdal
-      - api
     volumes:
       - ./h2o:/h2o:ro
       - ../secrets/tls:/tls:ro
-      - /etc/letsencrypt/:/letsencrypt/:ro
+      - ../secrets/letsencrypt/:/letsencrypt/:ro
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
+    expose:
+      - 80
+      - 443
+    environment:
+      TCP_PORTS: "80, 443"
     restart: always
     ulimits:
       nproc: 65535
@@ -27,6 +24,7 @@ services:
 
   varnish:
     build: ./varnish
+#  image: 0fc0a9a4272a
     networks:
       - void
     links:
@@ -42,6 +40,48 @@ services:
       nofile:
         soft: 800000
         hard: 900000
+
+#  flyio-pw-main:
+#    image: flyio/wormhole:0.5.36
+#    networks:
+#      - void
+#    environment:
+#      - FLY_TOKEN=REMOVED
+#      - FLY_LOCAL_ENDPOINT=haproxy-h2o:80
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+
+  flyio-api:
+    image: flyio/wormhole:0.5.36
+    networks:
+      - void
+    environment:
+      - FLY_TOKEN=REMOVED
+      - FLY_LOCAL_ENDPOINT=api:80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  # flyio-sociopata:
+  #   image: flyio/wormhole:0.5.36
+  #   networks:
+  #     - void
+  #   environment:
+  #     - FLY_TOKEN=REMOVED
+  #     - FLY_LOCAL_ENDPOINT=sociopata:80
+  #   restart: always
+  #   ulimits:
+  #     nproc: 65535
+  #     nofile:
+  #       soft: 800000
+  #       hard: 900000
 
   heimdal:
     build: ./heimdal
@@ -59,7 +99,7 @@ services:
         hard: 900000
 
   mysql:
-    image: mysql:8.0.0
+    image: mysql:8.0.11
     networks:
       - void
     volumes:
@@ -68,8 +108,6 @@ services:
       - ../backup/mysql:/backup
     expose:
       - 3306
-#    ports:
-#      - "127.0.0.1:3306:3306"
     restart: always
     ulimits:
       nproc: 65535
@@ -77,52 +115,35 @@ services:
         soft: 800000
         hard: 900000
 
-  mongo-dmt:
-    image: mongo:3.4.2
-    networks:
-      - void
-    volumes:
-      - ../db/mongo-dmt:/data/db
-      - /etc/localtime:/etc/localtime:ro
-    expose:
-      - 27017
-    restart: always
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 800000
-        hard: 900000
-
-  mongo:
-    image: mongo:3.4.2
-    networks:
-      - void
-    volumes:
-      - ../db/mongo:/data/db
-      - /etc/localtime:/etc/localtime:ro
-    expose:
-      - 27017
- #   ports:
- #     - "127.0.0.1:27017:27017"
-    restart: always
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 800000
-        hard: 900000
+  ### PLEBISCITE ###
+  #
+  # mongo-dmt:
+  #   image: mongo:3.4.6
+  #   networks:
+  #     - void
+  #   volumes:
+  #     - ../db/mongo-dmt:/data/db
+  #     - /etc/localtime:/etc/localtime:ro
+  #   expose:
+  #     - 27017
+  #   restart: always
+  #   ulimits:
+  #     nproc: 65535
+  #     nofile:
+  #       soft: 800000
+  #       hard: 900000
 
   es:
-    image: elasticsearch:2.4.4-alpine
+    image: elasticsearch:5.6.7-alpine
     networks:
       - void
     volumes:
       - ../db/esdata:/usr/share/elasticsearch/data
+      - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
       - /etc/localtime:/etc/localtime:ro
     expose:
       - 9200
       - 9300
-#    ports:
-#      - "127.0.0.1:9200:9200"
     restart: always
     ulimits:
       nproc: 65535
@@ -131,39 +152,18 @@ services:
         hard: 900000
 
   redis:
-    image: redis:3.2.8-alpine
+    image: redis:4.0.8-alpine
     networks:
       - void
     volumes:
       - ../db/redis:/data
       - /etc/localtime:/etc/localtime:ro
-#    ports:
-#      - "127.0.0.1:6379:6379"
     restart: always
     ulimits:
       nproc: 65535
       nofile:
         soft: 800000
         hard: 900000
-
-  countly:
-    image: countly/countly-server
-    networks:
-      - void
-    links:
-      - mongo
-    volumes:
-      - ./countly/config/frontend.js:/opt/countly/frontend/express/config.js
-      - ./countly/config/api.js:/opt/countly/api/config.js
-      - /etc/localtime:/etc/localtime:ro
-    expose:
-      - 80
-    restart: always
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 200000
-        hard: 200000
 
   changebot:
     build: ./changebot
@@ -199,8 +199,63 @@ services:
         soft: 200000
         hard: 200000
 
+  # sociopata:
+  #   build: ./sociopata/sociopata
+  #   networks:
+  #     - void
+  #   expose:
+  #     - 80
+  #   environment:
+  # #     - RUST_URL=redis://redis-sociopata/
+  #     - ROCKET_ENV=prod
+  #     - ROCKET_PORT=80
+  #     - ROCKET_ADDRESS=0.0.0.0
+  #   restart: always
+  #   ulimits:
+  #     nproc: 65535
+  #     nofile:
+  #       soft: 200000
+  #       hard: 200000
+
+  haproxy-hhvm:
+    image: dockercloud/haproxy:latest
+    depends_on:
+      - mediawiki-hhvm
+    networks:
+      - void
+    links:
+      - mediawiki-hhvm
+    expose:
+      - 80
+    ports:
+      - "127.0.0.1:11936:1936"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+#    environment:
+#      SERVICE_PORTS: 80
+
+  haproxy-h2o:
+    image: dockercloud/haproxy:latest
+    depends_on:
+      - h2o
+    networks:
+      - void
+    links:
+      - h2o
+    expose:
+      - 80
+      - 443
+    ports:
+      - "127.0.0.1:1936:1936"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   mediawiki-hhvm:
     build: ./hhvm-base
+#    image: 32ae5f4cedd0
+    command: ["/usr/bin/hhvm", "-m", "server", "-c", "/etc/hhvm/server.ini", "-c", "/etc/hhvm/site.ini", "-v", "Server.AllowRunAsRoot=1"]
     networks:
       - void
     links:
@@ -208,10 +263,14 @@ services:
       - redis
     volumes:
       - ../mediawiki-data:/var/www/public
-      - /mnt/ramdisk:/var/tmp
+      - ../cache/hhvm-tmp:/var/tmp
+      - ../cache/hhvm-run:/run/hhvm
       - /etc/localtime:/etc/localtime:ro
+      - ./hhvm-base/hhvm:/etc/hhvm
     expose:
       - 80
+    environment:
+      TCP_PORTS: "80"
     restart: always
     ulimits:
       nproc: 65535
@@ -220,15 +279,21 @@ services:
         hard: 200000
 
   ruleproxy:
-    image: nginx:1.13.0-alpine
+    #image: nginx:1.13.8-alpine
+    build: ./nginx/pagespeed
     networks:
       - void
-    links:
-      - mediawiki-hhvm
     volumes:
       - ../mediawiki-data:/var/www/public
-      - ./nginx:/etc/nginx:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/pagespeed.conf:/etc/nginx/conf.d/pagespeed.conf:ro
+      - ../cache/ngx_pagespeed:/var/cache/ngx_pagespeed
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      - NGINX_PAGESPEED=on
+      - NGINX_PAGESPEED_IMG=on
+      - NGINX_PAGESPEED_JS=on
+      - NGINX_PAGESPEED_CSS=on
     expose:
       - 80
     restart: always
@@ -245,6 +310,7 @@ services:
 #      - PLEBISCITE=1
       - MONGO_URL=mongodb://mongo-dmt:27017/plebiscite
       - MONGO_COLLECTION=reports
+      - ENGINE_API_KEY=service:bifrost:_bcIV50oaalUqT9zOQkBXw
     networks:
       - void
     expose:
@@ -256,43 +322,35 @@ services:
         soft: 800000
         hard: 900000
 
-#  tor-hidden-service:
-#    build: ./tor-hidden-service
-#    networks:
-#      - void
-#    links:
-#      - h2o
-#    volumes:
-#      - ../secrets/tor/:/usr/local/etc/tor/
-#      - /etc/localtime:/etc/localtime:ro
-#    restart: always
-#    ulimits:
-#      nproc: 65535
-#      nofile:
-#        soft: 800000
-#        hard: 900000
+  dmt-friendly-fire:
+    build: ./dmt-friendly-fire
+    networks:
+      - void
+    environment:
+      - FF_SERVICES=mediawiki-hhvm,h2o
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
 
-#  parsoid:
-#    build: ./parsoid
-#    environment:
-#      - MW_URL="https://psychonautwiki.org"
-#      - /etc/localtime:/etc/localtime:ro
-#    networks:
-#      - void
-#    expose:
-#      - 8000
-#    restart: always
-#    ulimits:
-#      nproc: 65535
-#      nofile:
-#        soft: 800000
-#        hard: 900000
+  i2pd:
+    image: ksey/i2pd
+    networks:
+      - void
+    volumes:
+      - ../secrets/i2pd/:/var/lib/i2pd
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
 
 networks:
   void:
     ipam:
       driver: default
       config:
-        - subnet: 2.2.0.0/16
-          ip_range: 2.2.5.0/24
-          gateway: 2.2.5.254
+        - subnet: 3.2.0.0/16
+          ip_range: 3.2.5.0/24
+          gateway: 3.2.5.254

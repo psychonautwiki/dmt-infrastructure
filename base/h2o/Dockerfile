@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM ubuntu:artful
 
-RUN apt-get update -y
+RUN apt-get update -y && apt-get upgrade -fy
 RUN apt-get install -fy git cmake build-essential libssl-dev libtool automake
 
 RUN git clone https://github.com/h2o/h2o.git /tmp/h2o

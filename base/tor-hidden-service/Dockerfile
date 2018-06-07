@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM ubuntu:artful
 
-RUN apt-get update && apt-get install -fy libssl-dev build-essential git
+RUN apt-get update && apt-get upgrade -fy && apt-get install -fy libssl-dev build-essential git
 
 RUN git clone https://git.torproject.org/tor.git /tmp/tor
 

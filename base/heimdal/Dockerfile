@@ -1,3 +1,3 @@
-FROM node:7.7.3-onbuild
+FROM node:9.5.0-onbuild
 
 ADD . .

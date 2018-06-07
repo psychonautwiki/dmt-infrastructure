@@ -1,0 +1,159 @@
+digraph G {
+    subgraph incoming {
+        node [style=filled,color=cornsilk];
+
+        haproxy_h2o -> h2o_1;
+        haproxy_h2o -> h2o_2;
+        haproxy_h2o -> h2o_3;
+        haproxy_h2o -> h2o_4;
+        haproxy_h2o -> h2o_5;
+        haproxy_h2o -> h2o_6;
+        haproxy_h2o -> h2o_7;
+        haproxy_h2o -> h2o_8;
+
+        label = "HHVM";
+        color=blue
+    }
+
+    subgraph balance {
+        node [style=filled,color=lightblue];
+
+        varnish -> nginx_ruleproxy;
+
+        label = "Caching";
+    }
+
+    subgraph mediawiki {
+        node [style=filled,color=deepskyblue1];
+
+        haproxy_hhvm -> hhvm_1;
+        haproxy_hhvm -> hhvm_2;
+        haproxy_hhvm -> hhvm_3;
+        haproxy_hhvm -> hhvm_4;
+        haproxy_hhvm -> hhvm_5;
+        haproxy_hhvm -> hhvm_6;
+        haproxy_hhvm -> hhvm_7;
+        haproxy_hhvm -> hhvm_8;
+
+
+        label = "HHVM";
+        color=blue
+    }
+
+    h2o_1 -> varnish;
+    h2o_2 -> varnish;
+    h2o_3 -> varnish;
+    h2o_4 -> varnish;
+    h2o_5 -> varnish;
+    h2o_6 -> varnish;
+    h2o_7 -> varnish;
+    h2o_8 -> varnish;
+
+    h2o_1 -> countly;
+    h2o_2 -> countly;
+    h2o_3 -> countly;
+    h2o_4 -> countly;
+    h2o_5 -> countly;
+    h2o_6 -> countly;
+    h2o_7 -> countly;
+    h2o_8 -> countly;
+
+    h2o_1 -> katharsis;
+    h2o_2 -> katharsis;
+    h2o_3 -> katharsis;
+    h2o_4 -> katharsis;
+    h2o_5 -> katharsis;
+    h2o_6 -> katharsis;
+    h2o_7 -> katharsis;
+    h2o_8 -> katharsis;
+
+    // h2o_1 -> sociopata; | active at s.p.org; indef retired
+    // h2o_2 -> sociopata; | active at s.p.org; indef retired
+    // h2o_3 -> sociopata; | active at s.p.org; indef retired
+    // h2o_4 -> sociopata; | active at s.p.org; indef retired
+    // h2o_5 -> sociopata; | active at s.p.org; indef retired
+    // h2o_6 -> sociopata; | active at s.p.org; indef retired
+    // h2o_7 -> sociopata; | active at s.p.org; indef retired
+    // h2o_8 -> sociopata; | active at s.p.org; indef retired
+
+    countly -> mongo_1;
+
+    // h2o_1 -> heimdal; | indef retired
+    // h2o_2 -> heimdal; | indef retired
+    // h2o_3 -> heimdal; | indef retired
+    // h2o_4 -> heimdal; | indef retired
+    // h2o_5 -> heimdal; | indef retired
+    // h2o_6 -> heimdal; | indef retired
+    // h2o_7 -> heimdal; | indef retired
+    // h2o_8 -> heimdal; | indef retired
+
+    h2o_1 -> bifrost;
+    h2o_2 -> bifrost;
+    h2o_3 -> bifrost;
+    h2o_4 -> bifrost;
+    h2o_5 -> bifrost;
+    h2o_6 -> bifrost;
+    h2o_7 -> bifrost;
+    h2o_8 -> bifrost;
+
+    bifrost -> haproxy_h2o;
+    // bifrost -> mongo_2; | retired until BF plebiscite is built
+
+    nginx_ruleproxy -> haproxy_hhvm;
+
+    hhvm_1 -> mysql;
+    hhvm_2 -> mysql;
+    hhvm_3 -> mysql;
+    hhvm_4 -> mysql;
+    hhvm_5 -> mysql;
+    hhvm_6 -> mysql;
+    hhvm_7 -> mysql;
+    hhvm_8 -> mysql;
+
+
+    hhvm_1 -> redis;
+    hhvm_2 -> redis;
+    hhvm_3 -> redis;
+    hhvm_4 -> redis;
+    hhvm_5 -> redis;
+    hhvm_6 -> redis;
+    hhvm_7 -> redis;
+    hhvm_8 -> redis;
+
+
+    hhvm_1 -> elasticsearch;
+    hhvm_2 -> elasticsearch;
+    hhvm_3 -> elasticsearch;
+    hhvm_4 -> elasticsearch;
+    hhvm_5 -> elasticsearch;
+    hhvm_6 -> elasticsearch;
+    hhvm_7 -> elasticsearch;
+    hhvm_8 -> elasticsearch;
+
+
+    hhvm_1 -> eyeOfProvidence;
+    hhvm_2 -> eyeOfProvidence;
+    hhvm_3 -> eyeOfProvidence;
+    hhvm_4 -> eyeOfProvidence;
+    hhvm_5 -> eyeOfProvidence;
+    hhvm_6 -> eyeOfProvidence;
+    hhvm_7 -> eyeOfProvidence;
+    hhvm_8 -> eyeOfProvidence;
+
+
+    hhvm_1 -> varnish;
+    hhvm_2 -> varnish;
+    hhvm_3 -> varnish;
+    hhvm_4 -> varnish;
+    hhvm_5 -> varnish;
+    hhvm_6 -> varnish;
+    hhvm_7 -> varnish;
+    hhvm_8 -> varnish;
+
+
+    mysql [shape=box];
+    redis [shape=box];
+    mongo_1 [shape=box];
+    // mongo_2 [shape=box];
+    elasticsearch [shape=box];
+}

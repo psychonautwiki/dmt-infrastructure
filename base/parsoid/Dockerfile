@@ -1,34 +1,43 @@
-FROM buildpack-deps:jessie
+FROM ubuntu:17.10
 
-RUN gpg --keyserver keys.gnupg.net --recv-keys \
-    664C383A3566A3481B942F007A322AC6E84AFDD2
+MAINTAINER pastakhov@yandex.ru
 
+# Install requered packages
 RUN set -x; \
     apt-get update \
     && apt-get install -y --no-install-recommends \
-      apt-transport-https \
-    && rm -rf /var/lib/apt/lists/*
+        ca-certificates \
+        git \
+        nodejs \
+        npm \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/archives/*
 
-RUN echo "deb https://releases.wikimedia.org/debian jessie-mediawiki main" > /etc/apt/sources.list.d/parsoid.list
-
+# Update npm
 RUN set -x; \
-    apt-get update \
-    && apt-get install -y --force-yes --no-install-recommends \
-      parsoid \
-    && rm -rf /var/lib/apt/lists/*
+    npm install -g npm
 
-WORKDIR /etc/mediawiki/parsoid
+ENV PARSOID_HOME=/var/lib/parsoid \
+    PARSOID_USER=parsoid \
+    PARSOID_VERSION=0.9.0
 
-RUN mkdir -p /data
+# parsoid setup
+RUN set -x; \
+    # Core
+    mkdir -p $PARSOID_HOME \
+    && git clone \
+        --branch v${PARSOID_VERSION} \
+        --single-branch \
+        --depth 1 \
+        --quiet \
+        https://gerrit.wikimedia.org/r/p/mediawiki/services/parsoid \
+        $PARSOID_HOME \
+    && cd $PARSOID_HOME \
+    && npm install \
+    && useradd -U -r -s /bin/bash $PARSOID_USER
 
-VOLUME /data
-EXPOSE 8000 8142
+COPY run-parsoid.sh /run-parsoid.sh
+RUN chmod -v +x /run-parsoid.sh
 
-ADD entrypoint.sh entrypoint.sh
-
-RUN chmod 0755 entrypoint.sh
-
-ENTRYPOINT ["./entrypoint.sh"]
-
-CMD ["/usr/bin/nodejs", "/usr/lib/parsoid/src/bin/server.js"]
-
+EXPOSE 8000
+CMD ["/run-parsoid.sh"]

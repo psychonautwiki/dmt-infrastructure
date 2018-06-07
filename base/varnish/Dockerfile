@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM ubuntu:artful
 
-RUN apt-get update -y
+RUN apt-get update -y && apt-get upgrade -fy
 RUN apt-get install -y automake \
 					   autotools-dev \
 					   libedit-dev \
@@ -22,9 +22,10 @@ WORKDIR /tmp/varnish-cache
 RUN ./autogen.sh
 RUN ./configure
 RUN make -j 8
-RUN make install
+RUN make install ; ldconfig
 
-RUN apt-get install -y libvarnish-dev
+#RUN apt-get install -y libvarnish-dev
+#RUN apt-get install -y libvarnishapi-dev
 
 ADD start start
 

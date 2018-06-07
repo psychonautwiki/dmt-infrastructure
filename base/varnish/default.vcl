@@ -62,7 +62,8 @@ sub vcl_recv {
     }      /* We only deal with GET and HEAD by default */
 
     # Pass requests from logged-in users directly.
-    if (req.http.Authorization || req.http.Cookie) {
+#    if (req.http.Authorization || req.http.Cookie) {
+    if (req.http.Cookie ~ "mediawiki_pw__session") {
         return (pass);
     } /* Not cacheable by default */
 
