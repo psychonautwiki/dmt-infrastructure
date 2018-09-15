@@ -41,47 +41,22 @@ services:
         soft: 800000
         hard: 900000
 
-#  flyio-pw-main:
-#    image: flyio/wormhole:0.5.36
-#    networks:
-#      - void
-#    environment:
-#      - FLY_TOKEN=REMOVED
-#      - FLY_LOCAL_ENDPOINT=haproxy-h2o:80
-#    restart: always
-#    ulimits:
-#      nproc: 65535
-#      nofile:
-#        soft: 800000
-#        hard: 900000
-
-  flyio-api:
-    image: flyio/wormhole:0.5.36
+  parsoid:
+    image: thenets/parsoid:0.9.0
     networks:
       - void
     environment:
-      - FLY_TOKEN=REMOVED
-      - FLY_LOCAL_ENDPOINT=api:80
+      - PARSOID_DOMAIN_psychonaut=http://varnish/w/api.php
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 8000
     restart: always
     ulimits:
       nproc: 65535
       nofile:
         soft: 800000
         hard: 900000
-
-  # flyio-sociopata:
-  #   image: flyio/wormhole:0.5.36
-  #   networks:
-  #     - void
-  #   environment:
-  #     - FLY_TOKEN=REMOVED
-  #     - FLY_LOCAL_ENDPOINT=sociopata:80
-  #   restart: always
-  #   ulimits:
-  #     nproc: 65535
-  #     nofile:
-  #       soft: 800000
-  #       hard: 900000
 
   heimdal:
     build: ./heimdal
@@ -99,7 +74,7 @@ services:
         hard: 900000
 
   mysql:
-    image: mysql:8.0.11
+    image: mysql:8.0.12
     networks:
       - void
     volumes:
@@ -108,6 +83,24 @@ services:
       - ../backup/mysql:/backup
     expose:
       - 3306
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  postgres:
+    image: postgres:11-beta3-alpine
+    networks:
+      - void
+    environment:
+      - POSTGRES_USER=mediawiki
+      - POSTGRES_PASSWORD=ae69c1af8fc27ab60bc7a545
+    volumes:
+      - ../db/postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - ../backup/postgres:/backup
     restart: always
     ulimits:
       nproc: 65535
@@ -134,7 +127,7 @@ services:
   #       hard: 900000
 
   es:
-    image: elasticsearch:5.6.7-alpine
+    image: elasticsearch:5.6.10
     networks:
       - void
     volumes:
@@ -152,7 +145,7 @@ services:
         hard: 900000
 
   redis:
-    image: redis:4.0.8-alpine
+    image: redis:4.0.11-alpine
     networks:
       - void
     volumes:
@@ -279,7 +272,7 @@ services:
         hard: 200000
 
   ruleproxy:
-    #image: nginx:1.13.8-alpine
+    #image: nginx:1.15.2-alpine
     build: ./nginx/pagespeed
     networks:
       - void
@@ -321,6 +314,41 @@ services:
       nofile:
         soft: 800000
         hard: 900000
+
+  countly-mongo:
+    image: mongo:3.4.10
+    networks:
+      - void
+    volumes:
+      - ../db/countly-mongo:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 27017
+    restart: always
+    ulimits:
+      nproc: 400000
+      nofile:
+        soft: 800000
+        hard: 900000
+
+  countly:
+    image: countly/countly-server
+    networks:
+      - void
+    links:
+      - countly-mongo
+    volumes:
+      - ./countly/config/frontend.js:/opt/countly/frontend/express/config.js
+      - ./countly/config/api.js:/opt/countly/api/config.js
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
 
   dmt-friendly-fire:
     build: ./dmt-friendly-fire
