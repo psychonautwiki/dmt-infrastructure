@@ -1,4 +1,6 @@
-FROM ubuntu:artful
+FROM ubuntu:cosmic
+
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -y && apt-get upgrade -fy
 RUN apt-get install -y automake \
@@ -9,6 +11,7 @@ RUN apt-get install -y automake \
 					   libpcre3-dev \
 					   libtool \
 					   pkg-config \
+					   python3 \
 					   python-docutils \
 					   python-sphinx \
 					   graphviz \

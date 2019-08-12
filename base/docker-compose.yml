@@ -42,7 +42,7 @@ services:
         hard: 900000
 
   parsoid:
-    image: thenets/parsoid:0.9.0
+    image: thenets/parsoid:0.10
     networks:
       - void
     environment:
@@ -90,24 +90,32 @@ services:
         soft: 800000
         hard: 900000
 
-  postgres:
-    image: postgres:11-beta3-alpine
+  prisma:
+    image: prismagraphql/prisma:1.32
     networks:
       - void
+    links:
+      - mysql
+    ports:
+      - 127.0.0.1:4466:4466
     environment:
-      - POSTGRES_USER=mediawiki
-      - POSTGRES_PASSWORD=ae69c1af8fc27ab60bc7a545
-    volumes:
-      - ../db/postgres:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-      - ../backup/postgres:/backup
+      PRISMA_CONFIG: |
+        managementApiSecret: REMOVED
+        port: 4466
+        databases:
+          default:
+            connector: REMOVED
+            migrations: REMOVED
+            host: REMOVED
+            port: REMOVED
+            user: REMOVED
+            password: REMOVED
     restart: always
     ulimits:
       nproc: 65535
       nofile:
         soft: 800000
         hard: 900000
-
   ### PLEBISCITE ###
   #
   # mongo-dmt:
@@ -127,7 +135,7 @@ services:
   #       hard: 900000
 
   es:
-    image: elasticsearch:5.6.10
+    image: elasticsearch:5.6.12
     networks:
       - void
     volumes:
@@ -158,6 +166,72 @@ services:
         soft: 800000
         hard: 900000
 
+################ APM ##########################
+
+#  apm-delete-indexes:
+#    image: playdingnow/delete-outdated-es-indexes:1.3
+#    networks:
+#      - void
+#    environment:
+#      - eshost=elasticsearch
+#      - esport=9200
+#      - esmaxdays=15
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+#
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.0
+#    networks:
+#      - void
+#    environment:
+#      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+#    volumes:
+#      - ../db/apm/es:/usr/share/elasticsearch/data
+#      - /etc/localtime:/etc/localtime:ro
+#    expose:
+#      - 9200
+#      - 8200
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:6.3.0
+#    networks:
+#      - void
+#    volumes:
+#      - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+#    expose:
+#      - 5601
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+#
+#  apmserver:
+#    image: playdingnow/elastic-apm-server:1.6.0
+#    networks:
+#      - void
+#    restart: always
+#    expose:
+#      - 8200
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 800000
+#        hard: 900000
+
+###############################################
+
   changebot:
     build: ./changebot
     networks:
@@ -166,12 +240,28 @@ services:
       - 3000
     environment:
       - TELEGRAM_TOKEN=REMOVED
+      - RUST_BACKTRACE=1
     restart: always
     ulimits:
       nproc: 65535
       nofile:
         soft: 200000
         hard: 200000
+
+#  gjallarhorn:
+#    build: ./gjallarhorn/gjallarhorn
+#    networks:
+#      - void
+#    environment:
+#      - TELEGRAM_TOKEN=REMOVED
+#      - KAFKA_OFFSET=latest
+#      - KAFKA_HOST=REMOVED
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 200000
+#        hard: 200000
 
   katharsis:
     build: ./katharsis
@@ -210,20 +300,20 @@ services:
   #       soft: 200000
   #       hard: 200000
 
-  haproxy-hhvm:
-    image: dockercloud/haproxy:latest
-    depends_on:
-      - mediawiki-hhvm
-    networks:
-      - void
-    links:
-      - mediawiki-hhvm
-    expose:
-      - 80
-    ports:
-      - "127.0.0.1:11936:1936"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+#  haproxy-hhvm:
+#    image: dockercloud/haproxy:latest
+#    depends_on:
+#      - mediawiki-hhvm
+#    networks:
+#      - void
+#    links:
+#      - mediawiki-hhvm
+#    expose:
+#      - 80
+#    ports:
+#      - "127.0.0.1:11936:1936"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
 #    environment:
 #      SERVICE_PORTS: 80
 
@@ -245,31 +335,46 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  mediawiki-hhvm:
-    build: ./hhvm-base
+#  mediawiki-hhvm:
+#    build: ./hhvm-base
 #    image: 32ae5f4cedd0
-    command: ["/usr/bin/hhvm", "-m", "server", "-c", "/etc/hhvm/server.ini", "-c", "/etc/hhvm/site.ini", "-v", "Server.AllowRunAsRoot=1"]
+#    command: ["/usr/bin/hhvm", "-m", "server", "-c", "/etc/hhvm/server.ini", "-c", "/etc/hhvm/site.ini", "-v", "Server.AllowRunAsRoot=1"]
+#    networks:
+#      - void
+#    links:
+#      - mysql
+#      - redis
+#    volumes:
+#      - ../mediawiki-data:/var/www/public
+#      - ../cache/hhvm-tmp:/var/tmp
+#      - ../cache/hhvm-run:/run/hhvm
+#      - /etc/localtime:/etc/localtime:ro
+#      - ./hhvm-base/hhvm:/etc/hhvm
+#    expose:
+#      - 80
+#    environment:
+#      TCP_PORTS: "80"
+#    restart: always
+#    ulimits:
+#      nproc: 65535
+#      nofile:
+#        soft: 200000
+#        hard: 200000
+
+  php-fpm:
+    build: ./phpfpm
     networks:
       - void
-    links:
-      - mysql
-      - redis
     volumes:
       - ../mediawiki-data:/var/www/public
-      - ../cache/hhvm-tmp:/var/tmp
-      - ../cache/hhvm-run:/run/hhvm
-      - /etc/localtime:/etc/localtime:ro
-      - ./hhvm-base/hhvm:/etc/hhvm
-    expose:
-      - 80
-    environment:
-      TCP_PORTS: "80"
+#      - ../cache/phpfpm:/cache
+      - /dev/null:/var/log/lua.log
     restart: always
     ulimits:
-      nproc: 65535
+      nproc: 400000
       nofile:
-        soft: 200000
-        hard: 200000
+        soft: 800000
+        hard: 900000
 
   ruleproxy:
     #image: nginx:1.15.2-alpine
@@ -303,7 +408,10 @@ services:
 #      - PLEBISCITE=1
       - MONGO_URL=mongodb://mongo-dmt:27017/plebiscite
       - MONGO_COLLECTION=reports
-      - ENGINE_API_KEY=service:bifrost:_bcIV50oaalUqT9zOQkBXw
+      - ENGINE_API_KEY=REMOVED
+      - useAPM=1
+      - apmKey=REMOVED
+      - apmServer=REMOVED
     networks:
       - void
     expose:
@@ -343,6 +451,20 @@ services:
       - /etc/localtime:/etc/localtime:ro
     expose:
       - 80
+    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 200000
+        hard: 200000
+
+  pw-blog:
+    image: ghost:2.9.1-alpine
+    networks:
+      - void
+    volumes:
+      - ./pw-blog:/var/lib/ghost/content
+      - ./pw-blog/config.production.json:/var/lib/ghost/config.production.json
     restart: always
     ulimits:
       nproc: 65535

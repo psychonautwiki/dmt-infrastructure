@@ -1,4 +1,4 @@
-FROM hhvm/hhvm-proxygen:latest
+FROM hhvm/hhvm-proxygen:3.27-lts-latest
 
 RUN apt-get update -y && apt-get upgrade -fy && apt-get install -y curl
 RUN apt-get install -fy imagemagick php-imagick librsvg2-bin poppler-utils ghostscript libgs-dev lua5.2 python python-pip
