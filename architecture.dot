@@ -14,10 +14,14 @@ digraph G {
     subgraph balance {
         node [style=filled,color=lightblue];
 
-        varnish -> nginx_ruleproxy;
+        varnish -> nginx_pagespeed;
 
         label = "Caching";
     }
+
+    fastly_edge_nodes -> fastly_shield_ams;
+
+    fastly_shield_ams -> haproxy_h2o;
 
     h2o_1 -> varnish;
     h2o_2 -> varnish;
@@ -29,11 +33,6 @@ digraph G {
     h2o_3 -> countly;
     h2o_4 -> countly;
 
-    h2o_1 -> katharsis;
-    h2o_2 -> katharsis;
-    h2o_3 -> katharsis;
-    h2o_4 -> katharsis;
-
     countly -> mongo_1;
 
     h2o_1 -> bifrost;
@@ -43,6 +42,9 @@ digraph G {
 
     bifrost -> haproxy_h2o;
 
+    nginx_pagespeed -> haproxy_h2o;
+    nginx_pagespeed -> nginx_ruleproxy;
+
     nginx_ruleproxy -> phpfpm;
 
     phpfpm -> mysql;
@@ -51,6 +53,11 @@ digraph G {
     phpfpm -> eyeOfProvidence;
     phpfpm -> varnish;
 
+    eyeOfProvidence -> telegram;
+
+    mysql -> backup_s3;
+    backup_s3 -> mysql;
+    backup_s3 -> amazon_s3;
 
     mysql [shape=box];
     redis [shape=box];

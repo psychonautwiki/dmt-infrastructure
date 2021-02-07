@@ -8,7 +8,8 @@ vcl 4.0;
 
 # set default backend if no server cluster specified
 backend default {
-    .host = "ruleproxy";
+    .host = "pagespeed";
+#    .host = "ruleproxy";
     .port = "80";
 
     .connect_timeout = 10s;
@@ -143,10 +144,10 @@ sub vcl_backend_response {
 
     # disable due to mediawiki quirkiness
 
-    #       if (beresp.http.Cache-Control ~ "(private|no-cache|no-store)") {
-    #          set beresp.uncacheable = true;
-    #          return (deliver);
-    #        }
+    #if (beresp.http.Cache-Control ~ "(private|no-cache|no-store)") {
+    #    set beresp.uncacheable = true;
+    #    return (deliver);
+    #}
 
     if (beresp.http.Authorization && !beresp.http.Cache-Control ~ "public") {
         set beresp.uncacheable = true;

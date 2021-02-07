@@ -1,6 +1,6 @@
 <h1 align="center">the DMT infrastructure</h1>
 
-<h5 align="center">Proudly providing accessible harm reduction to 650,000 users by handling over 47 million requests per month.</h5>
+<h5 align="center">Proudly providing accessible harm reduction to 700,000 users by handling over 53 million requests per month.</h5>
 
 ![](https://github.com/psychonautwiki/dmt-cluster-configuration/raw/master/architecture.png)
 

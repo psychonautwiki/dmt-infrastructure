@@ -1,4 +1,4 @@
-FROM ubuntu:cosmic
+FROM ubuntu:xenial
 
 ENV DEBIAN_FRONTEND noninteractive
 

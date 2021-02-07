@@ -4,4 +4,4 @@ http.host: 0.0.0.0
 #transport.host: 0.0.0.0
 #discovery.zen.minimum_master_nodes: 1
 
-script.inline: true
+#script.source: true

@@ -21,7 +21,7 @@ app.post('/ingress', (req, res) => {
     res.end();
 });
 
-app.get('/egress/dump/REMOVED', (req, res) =>
+app.get('/egress/dump/REDACTED', (req, res) =>
 //	db.createValueStream()
 //          .on('data', line => res.write(`${line}\n`))
 //          .on('end', () => res.end())

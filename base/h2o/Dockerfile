@@ -1,4 +1,4 @@
-FROM ubuntu:cosmic
+FROM ubuntu:xenial
 
 RUN apt-get update -y && apt-get upgrade -fy
 RUN apt-get install -fy git cmake build-essential libssl-dev libtool automake libz-dev
